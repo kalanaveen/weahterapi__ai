@@ -1,8 +1,9 @@
-"use client";
+'use client';
 import { Country, State, City } from 'country-state-city';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Select from 'react-select';
+import { GlobeAltIcon } from '@heroicons/react/24/solid';
 
 type option = {
   value: {
@@ -12,7 +13,7 @@ type option = {
   };
   label: string;
 } | null;
- 
+
 type cityOption = {
   value: {
     latitude: string;
@@ -26,24 +27,72 @@ type cityOption = {
 } | null;
 
 const options = Country.getAllCountries().map((country) => ({
-    value: {
-        latitude: country.latitude,
-        longitude: country.longitude,
-        isoCode:country.isoCode
-    },
-    label:country.name,
-}))
+  value: {
+    latitude: country.latitude,
+    longitude: country.longitude,
+    isoCode: country.isoCode,
+  },
+  label: country.name,
+}));
 
 const Citypicker = () => {
   const [selectedCountry, setSelectedCountry] = useState<option>(null);
   const [selectedCity, setSelectedCity] = useState<cityOption>(null);
   const router = useRouter();
 
-  return (
-    <div>
-          <Select options={options } />
-    </div>
-  )
-}
+  const handleSelectedCountry = (option: option) => {
+    setSelectedCountry(option);
+    setSelectedCity(null);
+  };
 
-export default Citypicker
+  const handleSelectedCity = (option: cityOption) => {
+    setSelectedCity(option);
+    router.push(`location/${option?.value.latitude}/${option?.value.longitude}`)
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* selected country  */}
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2 text-white/80">
+          <GlobeAltIcon className="h-5 w-5 text-white" />
+          <label htmlFor="country">Country</label>
+        </div>
+        <Select
+          className="text-black"
+          value={selectedCountry}
+          options={options}
+          onChange={handleSelectedCountry}
+        />
+      </div>
+
+      {/* select city */}
+      {selectedCountry && (
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2 text-white/80">
+            <GlobeAltIcon className="h-5 w-5 text-white" />
+            <label htmlFor="city">City</label>
+          </div>
+          <Select
+            className="text-black"
+            value={selectedCity}
+            onChange={handleSelectedCity}
+            options={City.getCitiesOfCountry(selectedCountry.value.isoCode)?.map((state) => ({
+                value: {
+                  latitude: state.latitude,
+                  longitude: state.longitude,
+                  countryCode:state.countryCode,
+                  name:state.name,
+                  stateCode:state.stateCode,
+                },
+                label:state.name,
+            }))
+            }  
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Citypicker;
